@@ -37,7 +37,7 @@ jobs:
           submodules: false
           # Do persist credentials, as we need it for the git checkout later
           persist-credentials: true
-      - name: "Checkout target branch"
+      - name: "Checkout base branch"
         run: |
           git checkout $GITHUB_BASE_REF
           git submodule update --recursive
@@ -92,8 +92,8 @@ jobs:
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
-            ## Vulnerability results from source branch
+            ## Vulnerability results from base branch
             ${{ steps.old.outputs.content }}
 
-            ## Vulnerability results from current PR
+            ## Vulnerability results from current PR branch
             ${{ steps.new.outputs.content }}
