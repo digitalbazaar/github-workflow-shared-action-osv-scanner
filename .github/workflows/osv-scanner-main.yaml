@@ -48,6 +48,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Generate `package-lock.json` from authorized sources
+        if: ${{ !hashFiles('/package-lock.json') }}
         run: |
           npm install --package-lock-only
       - name: "Run scanner on existing code and generate Markdown"
