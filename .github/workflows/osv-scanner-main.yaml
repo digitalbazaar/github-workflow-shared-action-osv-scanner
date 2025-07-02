@@ -39,7 +39,7 @@ jobs:
           submodules: false
           # Do persist credentials, as we need it for the git checkout later
           persist-credentials: true
-      - name: "Checkout target branch"
+      - name: "Checkout base branch"
         run: |
           git checkout $GITHUB_BASE_REF
           git submodule update --recursive
