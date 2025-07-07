@@ -45,8 +45,13 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Does package-lock.json exist?
+        id: base_package_lock
+        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6 # v3.0.0
+        with:
+          files: "package-lock.json"
       - name: Generate `package-lock.json`
-        if: ${{ hashFiles('package-lock.json') == '' }}
+        if: steps.base_package_lock.outputs.files_exists == 'false'
         run: |
           npm install --package-lock-only
       - name: "Run scanner on existing code and generate Markdown"
@@ -72,7 +77,13 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Does package-lock.json exist?
+        id: current_package_lock
+        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6 # v3.0.0
+        with:
+          files: "package-lock.json"
       - name: Generate `package-lock.json`
+        if: steps.current_package_lock.outputs.files_exists == 'false'
         run: |
           npm install --package-lock-only
       # post the generated markdown as a comment
