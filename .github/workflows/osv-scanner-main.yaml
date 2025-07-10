@@ -71,6 +71,8 @@ jobs:
           path: results.md
           trim: true
       - name: Find the most recent OSV issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: latest_issue
         # Note: this only finds the latest `OSV` labeled issue, so if there are
         # more than one OSV issue, those will be left alone.
@@ -79,12 +81,14 @@ jobs:
       - name: Update existing issue if vulnerabilities
         if: ${{ steps.latest_issue.outputs.content != '' && !contains(steps.results.outputs.content, 'No issues found') }}
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
         run: |
           gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY}"
       - name: Close existing issue if no vulnerabilities
         if: ${{ steps.latest_issue.outputs.content != '' && contains(steps.results.outputs.content, 'No issues found') }}
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
           COMMENT: ${{ steps.results.outputs.content }}
         run: |
