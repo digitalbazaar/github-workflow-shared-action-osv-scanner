@@ -78,12 +78,17 @@ jobs:
           gh issue list --search 'label:OSV sort:created-desc' --limit 1 --json number --jq .[].number
       - name: Update existing issue if vulnerabilities
         if: ${{ steps.latest_issue.outputs.content != '' && !contains(steps.results.outputs.content, 'No issues found') }}
+        env:
+          LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
         run: |
-          gh issue edit ${{ steps.latest_issue.outputs.content }} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY}"
+          gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY}"
       - name: Close existing issue if no vulnerabilities
         if: ${{ steps.latest_issue.outputs.content != '' && contains(steps.results.outputs.content, 'No issues found') }}
+        env:
+          LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
+          COMMENT: ${{ steps.results.outputs.content }}
         run: |
-          gh issue close ${{ steps.latest_issue.outputs.content }} --comment '${{ steps.results.outputs.content }}'
+          gh issue close ${LATEST_ISSUE} --comment '${COMMENT}'
       - name: Create issue from results
         if: ${{ steps.latest_issue.outputs.content == '' && !contains(steps.results.outputs.content, 'No issues found') }}
         env:
