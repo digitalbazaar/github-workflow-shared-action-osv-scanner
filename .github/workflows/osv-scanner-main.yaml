@@ -77,7 +77,8 @@ jobs:
         # Note: this only finds the latest `OSV` labeled issue, so if there are
         # more than one OSV issue, those will be left alone.
         run: |
-          gh issue list --search 'label:OSV sort:created-desc' --limit 1 --json number --jq .[].number
+          ISSUE_NUM=$(gh issue list --search 'label:OSV sort:created-desc' --limit 1 --json number --jq .[].number)
+          echo "content=$ISSUE_NUM" >> $GITHUB_OUTPUT
       - name: Update existing issue if vulnerabilities
         if: ${{ steps.latest_issue.outputs.content != '' && !contains(steps.results.outputs.content, 'No issues found') }}
         env:
