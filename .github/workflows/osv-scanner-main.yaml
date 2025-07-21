@@ -83,6 +83,7 @@ jobs:
         if: ${{ steps.latest_issue.outputs.content != '' && !contains(steps.results.outputs.content, 'No issues found') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_BODY: ${{ steps.results.outputs.content }}
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
         run: |
           gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY}"
