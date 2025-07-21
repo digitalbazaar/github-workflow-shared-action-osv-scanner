@@ -93,7 +93,7 @@ jobs:
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
           COMMENT: ${{ steps.results.outputs.content }}
         run: |
-          gh issue close ${LATEST_ISSUE} --comment '${COMMENT}'
+          gh issue close ${LATEST_ISSUE} --comment "${COMMENT}"
       - name: Create issue from results
         if: ${{ steps.latest_issue.outputs.content == '' && !contains(steps.results.outputs.content, 'No issues found') }}
         env:
