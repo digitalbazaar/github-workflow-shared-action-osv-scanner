@@ -55,7 +55,7 @@ jobs:
       - name: Generate `package-lock.json` from authorized sources
         if: steps.has_package_lock.outputs.files_exists == 'false'
         run: |
-          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
       - name: "Run scanner on existing code and generate Markdown"
         uses: google/osv-scanner-action/osv-scanner-action@2b64df4bbbe4e55a3a6cab3362485fbfaec5a2f8 # v2.0.3
         continue-on-error: true
