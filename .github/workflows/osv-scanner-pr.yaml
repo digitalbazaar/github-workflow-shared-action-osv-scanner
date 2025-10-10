@@ -72,6 +72,7 @@ jobs:
       - name: Generate npm audit and list report
         id: old_audit_list_report
         uses: ./.github/actions/npm-audit-list
+        continue-on-error: true # this action may not exist in the repo yet...
 
       # --- run the same on the current branch ---
       - name: "Checkout current branch"
