@@ -143,6 +143,22 @@ jobs:
           echo "$LIST" >> $GITHUB_OUTPUT
           echo "$delimiter" >> $GITHUB_OUTPUT
         continue-on-error: true
+      - name: combine npm audit/list reports
+        id: combined_report
+        run: |
+          # Use a random delimiter to capture the multi-line output
+          delimiter=$(openssl rand -hex 8)
+          echo "result<<$delimiter" >> $GITHUB_OUTPUT
+          echo "
+            ### npm audit
+
+            ${{ steps.audit_report.outputs.result }}
+
+            ### npm list
+
+            ${{ steps.list_report.outputs.result }}
+          " >> $GITHUB_OUTPUT
+          echo "$delimiter" >> $GITHUB_OUTPUT
 
       # Combine OSV, npm audit, and npm list output into a single comment
       - name: Add a comment containing OSV, npm audit, and npm list output
@@ -152,23 +168,10 @@ jobs:
             ## Vulnerability results from base branch
             ${{ steps.old.outputs.content }}
 
-            ### npm audit
-
-            ${{ steps.audit_report.outputs.result }}
-
-            ### npm list
-
-            ${{ steps.list_report.outputs.result }}
-
+            ${{ steps.combined_report.outputs.result }}
             ---
 
             ## Vulnerability results from current PR branch
             ${{ steps.new.outputs.content }}
 
-            ### npm audit
-
-            ${{ steps.audit_report.outputs.result }}
-
-            ### npm list
-
-            ${{ steps.list_report.outputs.result }}
+            ${{ steps.combined_report.outputs.result }}
