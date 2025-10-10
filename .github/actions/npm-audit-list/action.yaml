@@ -8,12 +8,14 @@ runs:
     # Run `npm audit` and collect as JSON
     - name: npm audit
       id: npm_audit
+      shell: bash
       run: |
         echo 'result=$(npm audit --json)' >> $GITHUB_OUTPUT
       continue-on-error: true
     # Use `jq` to create a Markdown table of the findings
     - name: npm audit
       id: audit_report
+      shell: bash
       run: |
         AUDIT=$(echo "${{ toJson(steps.npm_audit.outputs.result) }}" | jq -r '
           "| Severity | Name | Version | Fix Available |",
@@ -30,6 +32,7 @@ runs:
     # Generate a tree/list based on the vulnerable package names
     - name: npm list vulnerable dependencies
       id: list_report
+      shell: bash
       run: |
         DEPS=$(echo "${{ toJSON(steps.npm_audit.outputs.result) }}" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
         LIST=$(npm list $DEPS --json | jq -r '
@@ -52,6 +55,7 @@ runs:
       # Combine the two Markdown reports into one for use elsewhere
     - name: combine npm audit/list reports
       id: combined_report
+      shell: bash
       run: |
         # Use a random delimiter to capture the multi-line output
         delimiter=$(openssl rand -hex 8)
