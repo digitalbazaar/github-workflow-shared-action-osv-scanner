@@ -68,6 +68,12 @@ jobs:
         uses: juliangruber/read-file-action@b549046febe0fe86f8cb4f93c24e284433f9ab58 # v1.1.7
         with:
           path: old-results.md
+      # Run npm audit and npm list to build up additional report explanations
+      - name: Generate npm audit and list report
+        id: old_audit_list_report
+        uses: ./.github/actions/npm-audit-list
+
+      # --- run the same on the current branch ---
       - name: "Checkout current branch"
         # Use -f in case any changes were made by osv-scanner (there should be no changes)
         run: |
@@ -102,63 +108,9 @@ jobs:
           path: new-results.md
 
       # Run npm audit and npm list to build up additional report explanations
-      - name: npm audit
-        id: npm_audit
-        run: |
-          echo 'result=$(npm audit --json)' >> $GITHUB_OUTPUT
-        continue-on-error: true
-      - name: npm audit
-        id: audit_report
-        run: |
-          AUDIT=$(echo "${{ toJson(steps.npm_audit.outputs.result) }}" | jq -r '
-            "| Severity | Name | Version | Fix Available |",
-            "| --- | --- | --- | --- |",
-            (.vulnerabilities | to_entries | .[] |
-              "| \(.value.severity) | \(.key) | \(.value.range) | \(.value.fixAvailable.version) |"
-            )')
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "$AUDIT" >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-        continue-on-error: true
-      - name: npm list vulnerable dependencies
-        id: list_report
-        run: |
-          DEPS=$(echo "${{ toJSON(steps.npm_audit.outputs.result) }}" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
-          LIST=$(npm list $DEPS --json | jq -r '
-            def walk_tree(prefix):
-              to_entries | map(
-                "\(prefix)\(.key)@\(.value.version)\n" +
-                if .value.dependencies then
-                  (.value.dependencies | walk_tree("  " + prefix))
-                else
-                  ""
-                end
-              ) | join("");
-            .dependencies | walk_tree("* ")')
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "$LIST" >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-        continue-on-error: true
-      - name: combine npm audit/list reports
-        id: combined_report
-        run: |
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "
-            ### npm audit
-
-            ${{ steps.audit_report.outputs.result }}
-
-            ### npm list
-
-            ${{ steps.list_report.outputs.result }}
-          " >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
+      - name: Generate npm audit and list report
+        id: new_audit_list_report
+        uses: ./.github/actions/npm-audit-list
 
       # Combine OSV, npm audit, and npm list output into a single comment
       - name: Add a comment containing OSV, npm audit, and npm list output
@@ -168,10 +120,10 @@ jobs:
             ## Vulnerability results from base branch
             ${{ steps.old.outputs.content }}
 
-            ${{ steps.combined_report.outputs.result }}
+            ${{ steps.old_audit_list_report.outputs.result }}
             ---
 
             ## Vulnerability results from current PR branch
             ${{ steps.new.outputs.content }}
 
-            ${{ steps.combined_report.outputs.result }}
+            ${{ steps.new_audit_list_report.outputs.result }}
