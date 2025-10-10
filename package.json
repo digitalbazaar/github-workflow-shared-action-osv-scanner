@@ -1,0 +1,25 @@
+{
+  "name": "github-workflow-shared-action-osv-scanner",
+  "version": "1.0.0",
+  "description": "There are two shared workflows for using [OSV](https://osv.dev/) for doing Software Composition Analysis (SCA) using a `package-lock.json` (which is generated as part of the workflow).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digitalbazaar/github-workflow-shared-action-osv-scanner.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/digitalbazaar/github-workflow-shared-action-osv-scanner/issues"
+  },
+  "homepage": "https://github.com/digitalbazaar/github-workflow-shared-action-osv-scanner#readme",
+  "dependencies": {
+    "ajv-cli": "^5.0.0",
+    "cookie": "^0.4.0"
+  }
+}
