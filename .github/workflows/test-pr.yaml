@@ -15,14 +15,14 @@ on:
 jobs:
   ## run the following on PRs
   osv-scan-pr:
-    uses: digitalbazaar/github-workflow-shared-action-osv-scanner/.github/workflows/osv-scanner-pr.yaml@64442e54b86273b20da4a1f4bf2744b43f2e7e02
+    uses: digitalbazaar/github-workflow-shared-action-osv-scanner/.github/workflows/osv-scanner-pr.yaml@4c95459435444081863a2028e5f8e877c7f831c6
     permissions:
       contents: read
       pull-requests: write
 
   ## run the following only on the main branch
   osv-scan-main:
-    uses: digitalbazaar/github-workflow-shared-action-osv-scanner/.github/workflows/osv-scanner-main.yaml@64442e54b86273b20da4a1f4bf2744b43f2e7e02
+    uses: digitalbazaar/github-workflow-shared-action-osv-scanner/.github/workflows/osv-scanner-main.yaml@4c95459435444081863a2028e5f8e877c7f831c6
     permissions:
       contents: read
       issues: write
