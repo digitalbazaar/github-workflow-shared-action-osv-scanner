@@ -60,13 +60,12 @@ runs:
         # Use a random delimiter to capture the multi-line output
         delimiter=$(openssl rand -hex 8)
         echo "result<<$delimiter" >> $GITHUB_OUTPUT
-        echo "
-          ### npm audit
+        echo "### npm audit
 
-          ${{ steps.audit_report.outputs.result }}
+        ${{ steps.audit_report.outputs.result }}
 
-          ### npm list
+        ### npm list
 
-          ${{ steps.list_report.outputs.result }}
+        ${{ steps.list_report.outputs.result }}
         " >> $GITHUB_OUTPUT
         echo "$delimiter" >> $GITHUB_OUTPUT
