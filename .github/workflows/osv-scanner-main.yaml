@@ -1,7 +1,8 @@
 # Copyright 2025 Digital Bazaar, Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 
-# OSV-Scanner PR scanning reusable workflow, can be used as a PR action to detect new vulnerabilities being introduced.
+# OSV-Scanner PR scanning reusable workflow, can be used as a PR action to
+# detect new vulnerabilities being introduced.
 name: Use OSV to do SCA on `main`
 
 on:
