@@ -1,4 +1,7 @@
-# http://editorconfig.org
+# Copyright 2025 Digital Bazaar, Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+
+# https://editorconfig.org
 
 root = true
 
