@@ -70,6 +70,11 @@ jobs:
         with:
           path: results.md
           trim: true
+      # Run npm audit and npm list to build up additional report explanations
+      - name: Generate npm audit and list report
+        id: audit_list_report
+        uses: ./.github/actions/npm-audit-list
+        continue-on-error: true # this action may not exist in the repo yet...
       - name: Find the most recent OSV issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -86,7 +91,7 @@ jobs:
           ISSUE_BODY: ${{ steps.results.outputs.content }}
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
         run: |
-          gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY}"
+          gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY} ${{ steps.audit_list_report.outputs.result }}"
       - name: Close existing issue if no vulnerabilities
         if: ${{ steps.latest_issue.outputs.content != '' && contains(steps.results.outputs.content, 'No issues found') }}
         env:
@@ -94,11 +99,11 @@ jobs:
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
           COMMENT: ${{ steps.results.outputs.content }}
         run: |
-          gh issue close ${LATEST_ISSUE} --comment "${COMMENT}"
+          gh issue close ${LATEST_ISSUE} --comment "${COMMENT} ${{ steps.audit_list_report.outputs.result }}"
       - name: Create issue from results
         if: ${{ steps.latest_issue.outputs.content == '' && !contains(steps.results.outputs.content, 'No issues found') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_BODY: ${{ steps.results.outputs.content }}
         run: |
-          gh issue create --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY}" --label OSV
+          gh issue create --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY} ${{ steps.audit_list_report.outputs.result }}" --label OSV
