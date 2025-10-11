@@ -2,6 +2,10 @@ name: Output npm audit and list results as Markdown
 description: >
   A reusable action to output `npm audit` and a filtered `npm list` (based on
   the audit results) in Markdown.
+outputs:
+  result:
+    description: Combined npm audit/list reports
+    value: ${{ steps.combined_report.outputs.result }}
 runs:
   using: composite
   steps:
