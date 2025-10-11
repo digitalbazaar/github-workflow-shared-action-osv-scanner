@@ -35,7 +35,7 @@ runs:
       shell: bash
       run: |
         DEPS=$(echo "${{ toJSON(steps.npm_audit.outputs.result) }}" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
-        LIST=$(npm list $DEPS --json | jq -r '
+        LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
           def walk_tree(prefix):
             to_entries | map(
               "\(prefix)\(.key)@\(.value.version)\n" +
