@@ -1,3 +1,6 @@
+# Copyright 2025 Digital Bazaar, Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+
 name: Output npm audit and list results as Markdown
 description: >
   A reusable action to output `npm audit` and a filtered `npm list` (based on
