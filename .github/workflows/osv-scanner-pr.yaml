@@ -106,6 +106,7 @@ jobs:
       - name: Add a comment containing OSV, npm audit, and npm list output
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
+          comment-tag: action_report
           message: |
             ## Vulnerability results from base branch
             ${{ steps.old.outputs.content }}
