@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [24.x]
     steps:
       - name: Set current date to NOW env variable
         run: echo "NOW=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
