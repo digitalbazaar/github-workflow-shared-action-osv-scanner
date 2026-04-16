@@ -60,10 +60,70 @@ jobs:
           path: results.md
           trim: true
       # Run npm audit and npm list to build up additional report explanations
-      - name: Generate npm audit and list report
-        id: audit_list_report
-        uses: ./.github/actions/npm-audit-list
-        continue-on-error: true # this action may not exist in the repo yet...
+      - name: npm audit
+        id: npm_audit
+        shell: bash
+        run: |
+          echo 'result=$(npm audit --json)' >> $GITHUB_OUTPUT
+        continue-on-error: true
+      # Use `jq` to create a Markdown table of the findings
+      - name: npm audit
+        id: audit_report
+        shell: bash
+        run: |
+          AUDIT=$(echo "${{ toJson(steps.npm_audit.outputs.result) }}" | jq -r '
+            "| Severity | Name | Version | Fix Available |",
+            "| --- | --- | --- | --- |",
+            (.vulnerabilities | to_entries | .[] |
+              "| \(.value.severity) | \(.key) | \(.value.range) | \(.value.fixAvailable.version) |"
+            )')
+          # Use a random delimiter to capture the multi-line output
+          delimiter=$(openssl rand -hex 8)
+          echo "result<<$delimiter" >> $GITHUB_OUTPUT
+          echo "$AUDIT" >> $GITHUB_OUTPUT
+          echo "$delimiter" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      # Generate a tree/list based on the vulnerable package names
+      - name: npm list vulnerable dependencies
+        id: list_report
+        shell: bash
+        run: |
+          DEPS=$(echo "${{ toJSON(steps.npm_audit.outputs.result) }}" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
+          LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
+            def walk_tree(prefix):
+              to_entries | map(
+                "\(prefix)\(.key)@\(.value.version)\n" +
+                if .value.dependencies then
+                  (.value.dependencies | walk_tree("  " + prefix))
+                else
+                  ""
+                end
+              ) | join("");
+            .dependencies | walk_tree("* ")')
+          # Use a random delimiter to capture the multi-line output
+          delimiter=$(openssl rand -hex 8)
+          echo "result<<$delimiter" >> $GITHUB_OUTPUT
+          echo "$LIST" >> $GITHUB_OUTPUT
+          echo "$delimiter" >> $GITHUB_OUTPUT
+        continue-on-error: true
+        # Combine the two Markdown reports into one for use elsewhere
+      - name: combine npm audit/list reports
+        id: combined_report
+        shell: bash
+        run: |
+          # Use a random delimiter to capture the multi-line output
+          delimiter=$(openssl rand -hex 8)
+          echo "result<<$delimiter" >> $GITHUB_OUTPUT
+          echo "### npm audit
+
+          ${{ steps.audit_report.outputs.result }}
+
+          ### npm list
+
+          ${{ steps.list_report.outputs.result }}
+          " >> $GITHUB_OUTPUT
+          echo "$delimiter" >> $GITHUB_OUTPUT
+
       # Create the OSV label if it doesn't already exist
       - name: Create OSV label if it doesn't exist
         env:
