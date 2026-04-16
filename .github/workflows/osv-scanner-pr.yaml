@@ -20,7 +20,7 @@ jobs:
       matrix:
         node-version: [24.x]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           submodules: false
@@ -31,12 +31,12 @@ jobs:
           git checkout $GITHUB_BASE_REF
           git submodule update --recursive
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
       - name: Does package-lock.json exist?
         id: base_package_lock
-        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6 # v3.0.0
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         with:
           files: "package-lock.json"
       - name: Generate `package-lock.json`
@@ -44,7 +44,7 @@ jobs:
         run: |
           npm install --package-lock-only --ignore-scripts
       - name: "Run scanner on existing code and generate Markdown"
-        uses: google/osv-scanner-action/osv-scanner-action@2b64df4bbbe4e55a3a6cab3362485fbfaec5a2f8 # v2.0.3
+        uses: google/osv-scanner-action/osv-scanner-action@c51854704019a247608d928f370c98740469d4b5 # v2.3.5
         continue-on-error: true
         with:
           scan-args: |-
@@ -54,7 +54,7 @@ jobs:
       - name: Store old results in variable
         continue-on-error: true
         id: old
-        uses: juliangruber/read-file-action@b549046febe0fe86f8cb4f93c24e284433f9ab58 # v1.1.7
+        uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # v1.1.8
         with:
           path: old-results.md
       # Run npm audit and npm list to build up additional report explanations
@@ -70,12 +70,12 @@ jobs:
           git checkout -f $GITHUB_SHA
           git submodule update --recursive
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
       - name: Does package-lock.json exist?
         id: current_package_lock
-        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6 # v3.0.0
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         with:
           files: "package-lock.json"
       - name: Generate `package-lock.json`
@@ -84,7 +84,7 @@ jobs:
           npm install --package-lock-only --ignore-scripts
       # post the generated markdown as a comment
       - name: "Run scanner on new code and generate Markdown"
-        uses: google/osv-scanner-action/osv-scanner-action@2b64df4bbbe4e55a3a6cab3362485fbfaec5a2f8 # v2.0.3
+        uses: google/osv-scanner-action/osv-scanner-action@c51854704019a247608d928f370c98740469d4b5 # v2.3.5
         with:
           scan-args: |-
             --format=markdown
@@ -93,7 +93,7 @@ jobs:
         continue-on-error: true
       - name: Store new results in variable
         id: new
-        uses: juliangruber/read-file-action@b549046febe0fe86f8cb4f93c24e284433f9ab58 # v1.1.7
+        uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # v1.1.8
         with:
           path: new-results.md
 
