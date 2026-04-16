@@ -64,6 +64,12 @@ jobs:
         id: audit_list_report
         uses: ./.github/actions/npm-audit-list
         continue-on-error: true # this action may not exist in the repo yet...
+      # Create the OSV label if it doesn't already exist
+      - name: Create OSV label if it doesn't exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create OSV --color 033f72 --description "Vulnerabilities found by https://osv.dev/" || true
       - name: Find the most recent OSV issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
