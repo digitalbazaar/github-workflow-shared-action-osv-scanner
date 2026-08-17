@@ -1,0 +1,13 @@
+*.log
+*.sw[nop]
+*~
+.DS_Store
+.cache
+.dev
+.env
+.project
+.settings
+.vscode
+.zed
+TAGS
+node_modules
