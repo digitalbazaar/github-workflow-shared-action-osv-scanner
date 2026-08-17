@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Set current date to NOW env variable
         run: echo "NOW=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           submodules: false
@@ -33,7 +33,7 @@ jobs:
           git checkout $GITHUB_BASE_REF
           git submodule update --recursive
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
       - name: Does package-lock.json exist?
@@ -46,7 +46,7 @@ jobs:
         run: |
           npm install --package-lock-only --ignore-scripts
       - name: "Run scanner on existing code and generate Markdown"
-        uses: google/osv-scanner-action/osv-scanner-action@c51854704019a247608d928f370c98740469d4b5 # v2.3.5
+        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
         continue-on-error: true
         with:
           scan-args: |-
