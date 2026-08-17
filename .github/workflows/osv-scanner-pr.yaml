@@ -73,7 +73,12 @@ jobs:
             "| Severity | Name | Version | Fix Available |",
             "| --- | --- | --- | --- |",
             (.vulnerabilities | to_entries | .[] |
-              "| \(.value.severity) | \(.key) | \(.value.range) | \(.value.fixAvailable.version) |"
+              "| \(.value.severity) | \(.key) | \(.value.range) | \(
+                if (.value.fixAvailable | type) == "object"
+                then .value.fixAvailable.version
+                else (.value.fixAvailable | tostring)
+                end
+              ) |"
             )')
           # Use a random delimiter to capture the multi-line output
           delimiter=$(openssl rand -hex 8)
@@ -172,7 +177,12 @@ jobs:
             "| Severity | Name | Version | Fix Available |",
             "| --- | --- | --- | --- |",
             (.vulnerabilities | to_entries | .[] |
-              "| \(.value.severity) | \(.key) | \(.value.range) | \(.value.fixAvailable.version) |"
+              "| \(.value.severity) | \(.key) | \(.value.range) | \(
+                if (.value.fixAvailable | type) == "object"
+                then .value.fixAvailable.version
+                else (.value.fixAvailable | tostring)
+                end
+              ) |"
             )')
           # Use a random delimiter to capture the multi-line output
           delimiter=$(openssl rand -hex 8)
