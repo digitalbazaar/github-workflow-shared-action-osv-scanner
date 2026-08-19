@@ -69,7 +69,6 @@ jobs:
           echo "result<<$delimiter" >> $GITHUB_OUTPUT
           npm audit --json >> $GITHUB_OUTPUT || true
           echo "$delimiter" >> $GITHUB_OUTPUT
-        continue-on-error: true
       # Use `jq` to create a Markdown table of the findings
       - name: npm audit
         id: audit_report
@@ -123,6 +122,16 @@ jobs:
           echo "$LIST" >> $GITHUB_OUTPUT
           echo "$delimiter" >> $GITHUB_OUTPUT
         continue-on-error: true
+      # audit_report/list_report are continue-on-error since they only
+      # report on npm audit/list; a real bug there shouldn't block the
+      # OSV scan results below, but it should still be visible.
+      - name: Warn if npm audit/list report generation failed
+        if: steps.audit_report.outcome == 'failure' || steps.list_report.outcome == 'failure'
+        env:
+          AUDIT_REPORT_OUTCOME: ${{ steps.audit_report.outcome }}
+          LIST_REPORT_OUTCOME: ${{ steps.list_report.outcome }}
+        run: |
+          echo "::warning::npm audit/list report generation failed (audit_report=$AUDIT_REPORT_OUTCOME, list_report=$LIST_REPORT_OUTCOME). The npm audit/list section of this report may be missing or incomplete; see step logs."
         # Combine the two Markdown reports into one for use elsewhere
       - name: combine npm audit/list reports
         id: audit_list_report
