@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+- Wrap `npm list` output in a collapsed `<details>` section, since it can be
+  large when many vulnerabilities are found.
+
 ### Fixed
 - Collapse PR comment to a single "no change" note when base and PR
   vulnerability scan results are identical, instead of always posting both
