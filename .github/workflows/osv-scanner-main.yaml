@@ -64,14 +64,20 @@ jobs:
         id: npm_audit
         shell: bash
         run: |
-          echo 'result=$(npm audit --json)' >> $GITHUB_OUTPUT
+          # Use a random delimiter to capture the multi-line output
+          delimiter=$(openssl rand -hex 8)
+          echo "result<<$delimiter" >> $GITHUB_OUTPUT
+          npm audit --json >> $GITHUB_OUTPUT || true
+          echo "$delimiter" >> $GITHUB_OUTPUT
         continue-on-error: true
       # Use `jq` to create a Markdown table of the findings
       - name: npm audit
         id: audit_report
         shell: bash
+        env:
+          STEPS_NPM_AUDIT_OUTPUTS_RESULT: ${{ steps.npm_audit.outputs.result }}
         run: |
-          AUDIT=$(echo "${{ toJson(steps.npm_audit.outputs.result) }}" | jq -r '
+          AUDIT=$(echo "$STEPS_NPM_AUDIT_OUTPUTS_RESULT" | jq -r '
             "| Severity | Name | Version | Fix Available |",
             "| --- | --- | --- | --- |",
             (.vulnerabilities | to_entries | .[] |
@@ -92,8 +98,10 @@ jobs:
       - name: npm list vulnerable dependencies
         id: list_report
         shell: bash
+        env:
+          STEPS_NPM_AUDIT_OUTPUTS_RESULT: ${{ steps.npm_audit.outputs.result }}
         run: |
-          DEPS=$(echo "${{ toJSON(steps.npm_audit.outputs.result) }}" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
+          DEPS=$(echo "$STEPS_NPM_AUDIT_OUTPUTS_RESULT" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
           LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
             def walk_tree(prefix):
               to_entries | map(

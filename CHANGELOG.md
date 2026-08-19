@@ -6,6 +6,11 @@
 - Collapse PR comment to a single "no change" note when base and PR
   vulnerability scan results are identical, instead of always posting both
   in full.
+- Fix `npm audit` step to actually capture `npm audit --json` output. It was
+  previously never executed (a quoting bug swallowed the command), and only
+  appeared to work because an earlier, insecure version of the `npm audit`/
+  `npm list` report steps happened to re-run it via unsafe template
+  expansion; fixing that injection risk exposed this.
 
 ## 3.1.0 - 2026-08-17
 
