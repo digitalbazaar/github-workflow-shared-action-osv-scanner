@@ -100,17 +100,21 @@ jobs:
           STEPS_NPM_AUDIT_BASE_OUTPUTS_RESULT: ${{ steps.npm_audit_base.outputs.result }}
         run: |
           DEPS=$(echo "$STEPS_NPM_AUDIT_BASE_OUTPUTS_RESULT" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
-          LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
-            def walk_tree(prefix):
-              to_entries | map(
-                "\(prefix)\(.key)@\(.value.version)\n" +
-                if .value.dependencies then
-                  (.value.dependencies | walk_tree("  " + prefix))
-                else
-                  ""
-                end
-              ) | join("");
-            .dependencies | walk_tree("* ")')
+          if [ -z "$DEPS" ]; then
+            LIST=""
+          else
+            LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
+              def walk_tree(prefix):
+                to_entries | map(
+                  "\(prefix)\(.key)@\(.value.version)\n" +
+                  if .value.dependencies then
+                    (.value.dependencies | walk_tree("  " + prefix))
+                  else
+                    ""
+                  end
+                ) | join("");
+              .dependencies | walk_tree("* ")')
+          fi
           # Use a random delimiter to capture the multi-line output
           delimiter=$(openssl rand -hex 8)
           echo "result<<$delimiter" >> $GITHUB_OUTPUT
@@ -218,17 +222,21 @@ jobs:
           STEPS_NPM_AUDIT_OUTPUTS_RESULT: ${{ steps.npm_audit.outputs.result }}
         run: |
           DEPS=$(echo "$STEPS_NPM_AUDIT_OUTPUTS_RESULT" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
-          LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
-            def walk_tree(prefix):
-              to_entries | map(
-                "\(prefix)\(.key)@\(.value.version)\n" +
-                if .value.dependencies then
-                  (.value.dependencies | walk_tree("  " + prefix))
-                else
-                  ""
-                end
-              ) | join("");
-            .dependencies | walk_tree("* ")')
+          if [ -z "$DEPS" ]; then
+            LIST=""
+          else
+            LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
+              def walk_tree(prefix):
+                to_entries | map(
+                  "\(prefix)\(.key)@\(.value.version)\n" +
+                  if .value.dependencies then
+                    (.value.dependencies | walk_tree("  " + prefix))
+                  else
+                    ""
+                  end
+                ) | join("");
+              .dependencies | walk_tree("* ")')
+          fi
           # Use a random delimiter to capture the multi-line output
           delimiter=$(openssl rand -hex 8)
           echo "result<<$delimiter" >> $GITHUB_OUTPUT

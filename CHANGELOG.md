@@ -10,6 +10,8 @@
 - Collapse PR comment to a single "no change" note when base and PR
   vulnerability scan results are identical, instead of always posting both
   in full.
+- Stop `npm list` from showing the entire dependency tree when there are no
+  vulnerabilities; it now shows nothing in that case.
 - Fix `npm audit` step to actually capture `npm audit --json` output. It was
   previously never executed (a quoting bug swallowed the command), and only
   appeared to work because an earlier, insecure version of the `npm audit`/
