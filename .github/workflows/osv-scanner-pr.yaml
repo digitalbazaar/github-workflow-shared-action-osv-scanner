@@ -132,9 +132,12 @@ jobs:
 
           ${STEPS_AUDIT_REPORT_BASE_OUTPUTS_RESULT}
 
-          ### npm list
+          <details>
+          <summary>npm list</summary>
 
           ${STEPS_LIST_REPORT_BASE_OUTPUTS_RESULT}
+
+          </details>
           " >> $GITHUB_OUTPUT
           echo "$delimiter" >> $GITHUB_OUTPUT
 
@@ -247,9 +250,12 @@ jobs:
 
           ${STEPS_AUDIT_REPORT_OUTPUTS_RESULT}
 
-          ### npm list
+          <details>
+          <summary>npm list</summary>
 
           ${STEPS_LIST_REPORT_OUTPUTS_RESULT}
+
+          </details>
           " >> $GITHUB_OUTPUT
           echo "$delimiter" >> $GITHUB_OUTPUT
 
