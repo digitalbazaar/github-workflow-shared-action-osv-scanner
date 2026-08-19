@@ -26,263 +26,20 @@ jobs:
           submodules: false
           # Do persist credentials, as we need it for the git checkout later
           persist-credentials: true
-      - name: "Checkout base branch"
-        run: |
-          git checkout $GITHUB_BASE_REF
-          git submodule update --recursive
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Does package-lock.json exist?
-        id: base_package_lock
-        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
-        with:
-          files: "package-lock.json"
-      - name: Generate `package-lock.json`
-        if: steps.base_package_lock.outputs.files_exists == 'false'
-        run: |
-          npm install --package-lock-only --ignore-scripts
-      - name: "Run scanner on existing code and generate Markdown"
-        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
-        continue-on-error: true
-        with:
-          scan-args: |-
-            --format=markdown
-            --output=old-results.md
-            --lockfile=package-lock.json
-      - name: Store old results in variable
+      - name: Scan base branch
         id: old
-        uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # v1.1.8
+        uses: $/.github/actions/scan-branch
         with:
-          path: old-results.md
-      # Run npm audit and npm list to build up additional report explanations
-      - name: npm audit
-        id: npm_audit_base
-        shell: bash
-        run: |
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          npm audit --json >> $GITHUB_OUTPUT || true
-          echo "$delimiter" >> $GITHUB_OUTPUT
-      # Use `jq` to create a Markdown table of the findings
-      - name: npm audit
-        id: audit_report_base
-        shell: bash
-        env:
-          STEPS_NPM_AUDIT_BASE_OUTPUTS_RESULT: ${{ steps.npm_audit_base.outputs.result }}
-        run: |
-          AUDIT=$(echo "$STEPS_NPM_AUDIT_BASE_OUTPUTS_RESULT" | jq -r '
-            "| Severity | Name | Version | Fix Available |",
-            "| --- | --- | --- | --- |",
-            (.vulnerabilities | to_entries | .[] |
-              "| \(.value.severity) | \(.key) | \(.value.range) | \(
-                if (.value.fixAvailable | type) == "object"
-                then .value.fixAvailable.version
-                else (.value.fixAvailable | tostring)
-                end
-              ) |"
-            )')
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "$AUDIT" >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-        continue-on-error: true
-      # Generate a tree/list based on the vulnerable package names
-      - name: npm list vulnerable dependencies
-        id: list_report_base
-        shell: bash
-        env:
-          STEPS_NPM_AUDIT_BASE_OUTPUTS_RESULT: ${{ steps.npm_audit_base.outputs.result }}
-        run: |
-          DEPS=$(echo "$STEPS_NPM_AUDIT_BASE_OUTPUTS_RESULT" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
-          if [ -z "$DEPS" ]; then
-            LIST=""
-          else
-            LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
-              def walk_tree(prefix):
-                to_entries | map(
-                  "\(prefix)\(.key)@\(.value.version)\n" +
-                  if .value.dependencies then
-                    (.value.dependencies | walk_tree("  " + prefix))
-                  else
-                    ""
-                  end
-                ) | join("");
-              .dependencies | walk_tree("* ")')
-          fi
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "$LIST" >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-        continue-on-error: true
-      # audit_report_base/list_report_base are continue-on-error since they
-      # only report on npm audit/list; a real bug there shouldn't block the
-      # OSV scan results below, but it should still be visible.
-      - name: Warn if npm audit/list report generation failed (base branch)
-        if: steps.audit_report_base.outcome == 'failure' || steps.list_report_base.outcome == 'failure'
-        env:
-          AUDIT_REPORT_BASE_OUTCOME: ${{ steps.audit_report_base.outcome }}
-          LIST_REPORT_BASE_OUTCOME: ${{ steps.list_report_base.outcome }}
-        run: |
-          echo "::warning::npm audit/list report generation failed for the base branch (audit_report_base=$AUDIT_REPORT_BASE_OUTCOME, list_report_base=$LIST_REPORT_BASE_OUTCOME). The npm audit/list section of this report may be missing or incomplete; see step logs."
-      # Combine the two Markdown reports into one for use elsewhere
-      - name: combine npm audit/list reports
-        id: old_audit_list_report
-        shell: bash
-        env:
-          STEPS_AUDIT_REPORT_BASE_OUTPUTS_RESULT: ${{ steps.audit_report_base.outputs.result }}
-          STEPS_LIST_REPORT_BASE_OUTPUTS_RESULT: ${{ steps.list_report_base.outputs.result }}
-        run: |
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "### npm audit
-
-          ${STEPS_AUDIT_REPORT_BASE_OUTPUTS_RESULT}
-
-          <details>
-          <summary>npm list</summary>
-
-          ${STEPS_LIST_REPORT_BASE_OUTPUTS_RESULT}
-
-          </details>
-          " >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-
-      # --- run the same on the current branch ---
-      - name: "Checkout current branch"
-        # Use -f in case any changes were made by osv-scanner (there should be no changes)
-        run: |
-          git checkout -f $GITHUB_SHA
-          git submodule update --recursive
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
+          ref: ${{ github.base_ref }}
           node-version: ${{ matrix.node-version }}
-      - name: Does package-lock.json exist?
-        id: current_package_lock
-        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
-        with:
-          files: "package-lock.json"
-      - name: Generate `package-lock.json`
-        if: steps.current_package_lock.outputs.files_exists == 'false'
-        run: |
-          npm install --package-lock-only --ignore-scripts
-      # post the generated markdown as a comment
-      - name: "Run scanner on new code and generate Markdown"
-        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
-        with:
-          scan-args: |-
-            --format=markdown
-            --output=new-results.md
-            --lockfile=package-lock.json
-        continue-on-error: true
-      - name: Store new results in variable
+          warning-label: "the base branch scan"
+      - name: Scan PR branch
         id: new
-        uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # v1.1.8
+        uses: $/.github/actions/scan-branch
         with:
-          path: new-results.md
-
-      # Run npm audit and npm list to build up additional report explanations
-      - name: npm audit
-        id: npm_audit
-        shell: bash
-        run: |
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          npm audit --json >> $GITHUB_OUTPUT || true
-          echo "$delimiter" >> $GITHUB_OUTPUT
-      # Use `jq` to create a Markdown table of the findings
-      - name: npm audit
-        id: audit_report
-        shell: bash
-        env:
-          STEPS_NPM_AUDIT_OUTPUTS_RESULT: ${{ steps.npm_audit.outputs.result }}
-        run: |
-          AUDIT=$(echo "$STEPS_NPM_AUDIT_OUTPUTS_RESULT" | jq -r '
-            "| Severity | Name | Version | Fix Available |",
-            "| --- | --- | --- | --- |",
-            (.vulnerabilities | to_entries | .[] |
-              "| \(.value.severity) | \(.key) | \(.value.range) | \(
-                if (.value.fixAvailable | type) == "object"
-                then .value.fixAvailable.version
-                else (.value.fixAvailable | tostring)
-                end
-              ) |"
-            )')
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "$AUDIT" >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-        continue-on-error: true
-      # Generate a tree/list based on the vulnerable package names
-      - name: npm list vulnerable dependencies
-        id: list_report
-        shell: bash
-        env:
-          STEPS_NPM_AUDIT_OUTPUTS_RESULT: ${{ steps.npm_audit.outputs.result }}
-        run: |
-          DEPS=$(echo "$STEPS_NPM_AUDIT_OUTPUTS_RESULT" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
-          if [ -z "$DEPS" ]; then
-            LIST=""
-          else
-            LIST=$(npm list $DEPS --json --package-lock-only | jq -r '
-              def walk_tree(prefix):
-                to_entries | map(
-                  "\(prefix)\(.key)@\(.value.version)\n" +
-                  if .value.dependencies then
-                    (.value.dependencies | walk_tree("  " + prefix))
-                  else
-                    ""
-                  end
-                ) | join("");
-              .dependencies | walk_tree("* ")')
-          fi
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "$LIST" >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-        continue-on-error: true
-      # audit_report/list_report are continue-on-error since they only
-      # report on npm audit/list; a real bug there shouldn't block the OSV
-      # scan results below, but it should still be visible.
-      - name: Warn if npm audit/list report generation failed (PR branch)
-        if: steps.audit_report.outcome == 'failure' || steps.list_report.outcome == 'failure'
-        env:
-          AUDIT_REPORT_OUTCOME: ${{ steps.audit_report.outcome }}
-          LIST_REPORT_OUTCOME: ${{ steps.list_report.outcome }}
-        run: |
-          echo "::warning::npm audit/list report generation failed for the PR branch (audit_report=$AUDIT_REPORT_OUTCOME, list_report=$LIST_REPORT_OUTCOME). The npm audit/list section of this report may be missing or incomplete; see step logs."
-      # Combine the two Markdown reports into one for use elsewhere
-      - name: combine npm audit/list reports
-        id: new_audit_list_report
-        shell: bash
-        env:
-          STEPS_AUDIT_REPORT_OUTPUTS_RESULT: ${{ steps.audit_report.outputs.result }}
-          STEPS_LIST_REPORT_OUTPUTS_RESULT: ${{ steps.list_report.outputs.result }}
-        run: |
-          # Use a random delimiter to capture the multi-line output
-          delimiter=$(openssl rand -hex 8)
-          echo "result<<$delimiter" >> $GITHUB_OUTPUT
-          echo "### npm audit
-
-          ${STEPS_AUDIT_REPORT_OUTPUTS_RESULT}
-
-          <details>
-          <summary>npm list</summary>
-
-          ${STEPS_LIST_REPORT_OUTPUTS_RESULT}
-
-          </details>
-          " >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
+          ref: ${{ github.sha }}
+          node-version: ${{ matrix.node-version }}
+          warning-label: "the PR branch scan"
 
       # If the base and PR results are identical, avoid posting two walls of
       # duplicate Markdown; just note that nothing changed.
@@ -290,10 +47,10 @@ jobs:
         id: build_comment
         shell: bash
         env:
-          OLD_OSV: ${{ steps.old.outputs.content }}
-          NEW_OSV: ${{ steps.new.outputs.content }}
-          OLD_EXTRA: ${{ steps.old_audit_list_report.outputs.result }}
-          NEW_EXTRA: ${{ steps.new_audit_list_report.outputs.result }}
+          OLD_OSV: ${{ steps.old.outputs.osv-result }}
+          NEW_OSV: ${{ steps.new.outputs.osv-result }}
+          OLD_EXTRA: ${{ steps.old.outputs.audit-list-result }}
+          NEW_EXTRA: ${{ steps.new.outputs.audit-list-result }}
         run: |
           # Use a random delimiter to capture the multi-line output
           delimiter=$(openssl rand -hex 8)
