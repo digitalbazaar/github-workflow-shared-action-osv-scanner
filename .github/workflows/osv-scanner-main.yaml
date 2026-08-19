@@ -115,17 +115,20 @@ jobs:
       - name: combine npm audit/list reports
         id: audit_list_report
         shell: bash
+        env:
+          STEPS_AUDIT_REPORT_OUTPUTS_RESULT: ${{ steps.audit_report.outputs.result }}
+          STEPS_LIST_REPORT_OUTPUTS_RESULT: ${{ steps.list_report.outputs.result }}
         run: |
           # Use a random delimiter to capture the multi-line output
           delimiter=$(openssl rand -hex 8)
           echo "result<<$delimiter" >> $GITHUB_OUTPUT
           echo "### npm audit
 
-          ${{ steps.audit_report.outputs.result }}
+          ${STEPS_AUDIT_REPORT_OUTPUTS_RESULT}
 
           ### npm list
 
-          ${{ steps.list_report.outputs.result }}
+          ${STEPS_LIST_REPORT_OUTPUTS_RESULT}
           " >> $GITHUB_OUTPUT
           echo "$delimiter" >> $GITHUB_OUTPUT
 
@@ -150,20 +153,23 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_BODY: ${{ steps.results.outputs.content }}
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
+          STEPS_AUDIT_LIST_REPORT_OUTPUTS_RESULT: ${{ steps.audit_list_report.outputs.result }}
         run: |
-          gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY} ${{ steps.audit_list_report.outputs.result }}"
+          gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY} ${STEPS_AUDIT_LIST_REPORT_OUTPUTS_RESULT}"
       - name: Close existing issue if no vulnerabilities
         if: ${{ steps.latest_issue.outputs.content != '' && contains(steps.results.outputs.content, 'No issues found') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
           COMMENT: ${{ steps.results.outputs.content }}
+          STEPS_AUDIT_LIST_REPORT_OUTPUTS_RESULT: ${{ steps.audit_list_report.outputs.result }}
         run: |
-          gh issue close ${LATEST_ISSUE} --comment "${COMMENT} ${{ steps.audit_list_report.outputs.result }}"
+          gh issue close ${LATEST_ISSUE} --comment "${COMMENT} ${STEPS_AUDIT_LIST_REPORT_OUTPUTS_RESULT}"
       - name: Create issue from results
         if: ${{ steps.latest_issue.outputs.content == '' && !contains(steps.results.outputs.content, 'No issues found') }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_BODY: ${{ steps.results.outputs.content }}
+          STEPS_AUDIT_LIST_REPORT_OUTPUTS_RESULT: ${{ steps.audit_list_report.outputs.result }}
         run: |
-          gh issue create --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY} ${{ steps.audit_list_report.outputs.result }}" --label OSV
+          gh issue create --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY} ${STEPS_AUDIT_LIST_REPORT_OUTPUTS_RESULT}" --label OSV
