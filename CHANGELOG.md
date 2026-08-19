@@ -1,6 +1,6 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
-## 3.1.0 - 2026-xx-xx
+## 3.1.0 - 2026-08-17
 
 ### Changed
 - Update actions.
