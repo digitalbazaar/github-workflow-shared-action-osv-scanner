@@ -10,6 +10,12 @@
   `::warning::` annotations when the remaining `continue-on-error`-guarded
   npm audit/list report steps fail, so problems are no longer silently
   invisible.
+- Extract the checkout/osv-scanner/npm-audit/npm-list sequence, previously
+  duplicated once in `osv-scanner-main.yaml` and twice in
+  `osv-scanner-pr.yaml`, into a shared local composite action
+  (`.github/actions/scan-branch`), referenced via the `$/` self-repository
+  syntax. Internal refactor only; no change for consumers of the two
+  reusable workflows.
 
 ### Fixed
 - Collapse PR comment to a single "no change" note when base and PR
