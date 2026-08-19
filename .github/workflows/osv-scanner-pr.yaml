@@ -109,7 +109,7 @@ jobs:
           echo "$LIST" >> $GITHUB_OUTPUT
           echo "$delimiter" >> $GITHUB_OUTPUT
         continue-on-error: true
-        # Combine the two Markdown reports into one for use elsewhere
+      # Combine the two Markdown reports into one for use elsewhere
       - name: combine npm audit/list reports
         id: old_audit_list_report
         shell: bash
@@ -231,20 +231,45 @@ jobs:
           " >> $GITHUB_OUTPUT
           echo "$delimiter" >> $GITHUB_OUTPUT
 
+      # If the base and PR results are identical, avoid posting two walls of
+      # duplicate Markdown; just note that nothing changed.
+      - name: Build PR comment message
+        id: build_comment
+        shell: bash
+        env:
+          OLD_OSV: ${{ steps.old.outputs.content }}
+          NEW_OSV: ${{ steps.new.outputs.content }}
+          OLD_EXTRA: ${{ steps.old_audit_list_report.outputs.result }}
+          NEW_EXTRA: ${{ steps.new_audit_list_report.outputs.result }}
+        run: |
+          # Use a random delimiter to capture the multi-line output
+          delimiter=$(openssl rand -hex 8)
+          echo "message<<$delimiter" >> "$GITHUB_OUTPUT"
+          if [ "$OLD_OSV" == "$NEW_OSV" ] && [ "$OLD_EXTRA" == "$NEW_EXTRA" ]; then
+            echo "## Vulnerability results" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
+            echo "No change from base branch." >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
+            echo "$NEW_OSV" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
+            echo "$NEW_EXTRA" >> "$GITHUB_OUTPUT"
+          else
+            echo "## Vulnerability results from base branch" >> "$GITHUB_OUTPUT"
+            echo "$OLD_OSV" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
+            echo "$OLD_EXTRA" >> "$GITHUB_OUTPUT"
+            echo "---" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
+            echo "## Vulnerability results from current PR branch" >> "$GITHUB_OUTPUT"
+            echo "$NEW_OSV" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
+            echo "$NEW_EXTRA" >> "$GITHUB_OUTPUT"
+          fi
+          echo "$delimiter" >> "$GITHUB_OUTPUT"
 
       # Combine OSV, npm audit, and npm list output into a single comment
       - name: Add a comment containing OSV, npm audit, and npm list output
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           comment-tag: action_report
-          message: |
-            ## Vulnerability results from base branch
-            ${{ steps.old.outputs.content }}
-
-            ${{ steps.old_audit_list_report.outputs.result }}
-            ---
-
-            ## Vulnerability results from current PR branch
-            ${{ steps.new.outputs.content }}
-
-            ${{ steps.new_audit_list_report.outputs.result }}
+          message: ${{ steps.build_comment.outputs.message }}

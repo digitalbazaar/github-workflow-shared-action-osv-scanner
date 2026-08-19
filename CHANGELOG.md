@@ -1,5 +1,12 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
+## Unreleased
+
+### Fixed
+- Collapse PR comment to a single "no change" note when base and PR
+  vulnerability scan results are identical, instead of always posting both
+  in full.
+
 ## 3.1.0 - 2026-08-17
 
 ### Changed
