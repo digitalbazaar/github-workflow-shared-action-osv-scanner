@@ -1,5 +1,13 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
+## Unreleased
+
+### Fixed
+- Fix `npm audit` report table showing a bare version number in the "Fix
+  Available" column when the fix requires updating a different (usually
+  ancestor) package instead of the vulnerable package itself; it now shows
+  `name@version` so it's clear which package to update.
+
 ## 4.0.0 - 2026-08-20
 
 ### Changed
