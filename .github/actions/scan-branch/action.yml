@@ -88,7 +88,7 @@ runs:
           (.vulnerabilities | to_entries | .[] |
             "| \(.value.severity) | \(.key) | \(.value.range) | \(
               if (.value.fixAvailable | type) == "object"
-              then .value.fixAvailable.version
+              then (.value.fixAvailable.name // .key) + "@" + .value.fixAvailable.version
               else (.value.fixAvailable | tostring)
               end
             ) |"
