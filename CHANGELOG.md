@@ -1,6 +1,6 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
-## Unreleased
+## 4.0.0 - 2026-08-20
 
 ### Changed
 - Wrap `npm list` output in a collapsed `<details>` section, since it can be
