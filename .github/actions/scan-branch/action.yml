@@ -57,7 +57,7 @@ runs:
       with:
         scan-args: |-
           --format=markdown
-          --output=osv-results.md
+          --output-file=osv-results.md
           --lockfile=package-lock.json
     - name: Store results in variable
       id: read_results
