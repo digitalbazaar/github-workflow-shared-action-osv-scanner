@@ -1,6 +1,6 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
-## Unreleased
+## 4.0.1 - 2026-08-20
 
 ### Fixed
 - Fix `npm audit` report table showing a bare version number in the "Fix
