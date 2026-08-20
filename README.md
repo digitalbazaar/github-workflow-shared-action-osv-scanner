@@ -66,6 +66,8 @@ jobs:
 
 | Release | SHA | Notes |
 | ------- | --- | ----- |
+| v4.0.0  | 7bf5b9c80f41e5fde94cb0ad74a1a0ceec036726 | Security and bug fixes, improve output, refactorings |
+| v3.1.0  | 6f08463b590bb2034203bf68cde70530e43b8a26 | Fix npm audit output |
 | v3.0.0  | 536972bc49c10826182731e6d7ec5d69100e14ca | Fixes & dependency updates |
 | v2.0.0  | 5367fe2df1bbed52b3cc34ebde6599d990e92ece | Added npm audit/list |
 | v1.0.0  | a3f075f418e548dc2d55220acd7de23bdf8c4e70 | Initial release |
