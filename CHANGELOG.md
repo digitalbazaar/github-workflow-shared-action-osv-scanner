@@ -1,5 +1,14 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
+## Unreleased
+
+### Changed
+- Report "No vulnerabilities found." instead of an empty, header-only
+  table when `npm audit` finds nothing, and omit the `npm list` `<details>`
+  section entirely in that case instead of showing it empty.
+- Bump the `npm audit` heading from `###` to `##`, matching the OSV
+  results heading level.
+
 ## 4.0.3 - 2026-08-21
 
 - Fix `osv-scanner-main.yaml`'s issue body/comment text joining the OSV
