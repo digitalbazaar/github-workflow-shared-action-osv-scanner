@@ -28,11 +28,11 @@ jobs:
           submodules: false
           # Do persist credentials, as we need it for the git checkout later
           persist-credentials: true
-      - name: Scan base branch
+      - name: Scan branch
         id: scan
         uses: $/.github/actions/scan-branch
         with:
-          ref: ${{ github.base_ref }}
+          ref: ${{ github.sha }}
           node-version: ${{ matrix.node-version }}
           warning-label: "the scan"
 

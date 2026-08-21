@@ -30,7 +30,9 @@ jobs:
         id: old
         uses: $/.github/actions/scan-branch
         with:
-          ref: ${{ github.base_ref }}
+          # `github.base_ref` is only populated for `pull_request`; for
+          # `merge_group` the base ref is under the event payload instead.
+          ref: ${{ github.event.merge_group.base_ref || github.base_ref }}
           node-version: ${{ matrix.node-version }}
           warning-label: "the base branch scan"
       - name: Scan PR branch

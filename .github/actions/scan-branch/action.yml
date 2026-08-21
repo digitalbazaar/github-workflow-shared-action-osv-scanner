@@ -35,6 +35,10 @@ runs:
       env:
         REF: ${{ inputs.ref }}
       run: |
+        if [ -z "$REF" ]; then
+          echo "::error::scan-branch action's 'ref' input is required and was empty."
+          exit 1
+        fi
         git checkout -f "$REF"
         git submodule update --recursive
     - name: Use Node.js
