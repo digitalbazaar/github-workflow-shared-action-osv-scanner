@@ -59,7 +59,7 @@ jobs:
           LATEST_ISSUE: ${{ steps.latest_issue.outputs.content }}
           STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT: ${{ steps.scan.outputs.audit-list-result }}
         run: |
-          gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY} ${STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT}"
+          gh issue edit ${LATEST_ISSUE} --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY}"$'\n\n'"${STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT}"
       - name: Close existing issue if no vulnerabilities
         if: ${{ steps.latest_issue.outputs.content != '' && contains(steps.scan.outputs.osv-result, 'No issues found') }}
         env:
@@ -68,7 +68,7 @@ jobs:
           COMMENT: ${{ steps.scan.outputs.osv-result }}
           STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT: ${{ steps.scan.outputs.audit-list-result }}
         run: |
-          gh issue close ${LATEST_ISSUE} --comment "${COMMENT} ${STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT}"
+          gh issue close ${LATEST_ISSUE} --comment "${COMMENT}"$'\n\n'"${STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT}"
       - name: Create issue from results
         if: ${{ steps.latest_issue.outputs.content == '' && !contains(steps.scan.outputs.osv-result, 'No issues found') }}
         env:
@@ -76,4 +76,4 @@ jobs:
           ISSUE_BODY: ${{ steps.scan.outputs.osv-result }}
           STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT: ${{ steps.scan.outputs.audit-list-result }}
         run: |
-          gh issue create --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY} ${STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT}" --label OSV
+          gh issue create --title "Vulnerabilities as of ${NOW}" --body "${ISSUE_BODY}"$'\n\n'"${STEPS_SCAN_OUTPUTS_AUDIT_LIST_RESULT}" --label OSV

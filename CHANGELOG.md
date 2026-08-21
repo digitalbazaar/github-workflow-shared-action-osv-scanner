@@ -1,5 +1,11 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
+## 4.0.3 - 2026-08-xx
+
+- Fix `osv-scanner-main.yaml`'s issue body/comment text joining the OSV
+  report and the npm audit/list report with a single space instead of a
+  newline, so the OSV table's last cell ran directly into `### npm audit`.
+
 ## 4.0.2 - 2026-08-21
 
 ### Fixed
