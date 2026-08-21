@@ -1,5 +1,20 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
+## Unreleased
+
+### Fixed
+- Fix `osv-scanner-main.yaml` failing on every `push`/`schedule` run with
+  `fatal: empty string is not a valid pathspec`. It passed
+  `github.base_ref` as the ref to scan, which is only populated for
+  `pull_request` events; on `push`/`schedule` this was always empty. Use
+  `github.sha` instead, which is what's actually being scanned there.
+- Fix the same class of bug in `osv-scanner-pr.yaml`'s base-branch scan for
+  `merge_group`-triggered runs: `github.base_ref` isn't populated for
+  `merge_group` either, only `pull_request`. Fall back to
+  `github.event.merge_group.base_ref`.
+- `scan-branch` action now fails with a clear `::error::` if its `ref`
+  input is empty, instead of a cryptic git pathspec error.
+
 ## 4.0.1 - 2026-08-20
 
 ### Fixed
