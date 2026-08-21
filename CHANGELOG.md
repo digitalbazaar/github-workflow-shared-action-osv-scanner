@@ -1,6 +1,6 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
-## Unreleased
+## 4.0.4 - 2026-08-21
 
 ### Changed
 - Report "No vulnerabilities found." instead of an empty, header-only
