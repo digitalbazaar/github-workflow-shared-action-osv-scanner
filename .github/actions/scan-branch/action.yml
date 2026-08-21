@@ -87,16 +87,20 @@ runs:
         STEPS_NPM_AUDIT_OUTPUTS_RESULT: ${{ steps.npm_audit.outputs.result }}
       run: |
         AUDIT=$(echo "$STEPS_NPM_AUDIT_OUTPUTS_RESULT" | jq -r '
-          "| Severity | Name | Version | Fix Available |",
-          "| --- | --- | --- | --- |",
-          (.vulnerabilities | to_entries | .[] |
-            "| \(.value.severity) | \(.key) | \(.value.range) | \(
-              if (.value.fixAvailable | type) == "object"
-              then (.value.fixAvailable.name // .key) + "@" + .value.fixAvailable.version
-              else (.value.fixAvailable | tostring)
-              end
-            ) |"
-          )')
+          if (.vulnerabilities | length) == 0 then
+            "No vulnerabilities found."
+          else
+            "| Severity | Name | Version | Fix Available |",
+            "| --- | --- | --- | --- |",
+            (.vulnerabilities | to_entries | .[] |
+              "| \(.value.severity) | \(.key) | \(.value.range) | \(
+                if (.value.fixAvailable | type) == "object"
+                then (.value.fixAvailable.name // .key) + "@" + .value.fixAvailable.version
+                else (.value.fixAvailable | tostring)
+                end
+              ) |"
+            )
+          end')
         # Use a random delimiter to capture the multi-line output
         delimiter=$(openssl rand -hex 8)
         echo "result<<$delimiter" >> $GITHUB_OUTPUT
@@ -152,18 +156,14 @@ runs:
         STEPS_AUDIT_REPORT_OUTPUTS_RESULT: ${{ steps.audit_report.outputs.result }}
         STEPS_LIST_REPORT_OUTPUTS_RESULT: ${{ steps.list_report.outputs.result }}
       run: |
+        RESULT=$(printf '## npm audit\n\n%s' "$STEPS_AUDIT_REPORT_OUTPUTS_RESULT")
+        # Omit the npm list section entirely when there's nothing to list,
+        # rather than an empty, heading-only <details> block.
+        if [ -n "$STEPS_LIST_REPORT_OUTPUTS_RESULT" ]; then
+          RESULT=$(printf '%s\n\n<details>\n<summary>npm list</summary>\n\n%s\n\n</details>' "$RESULT" "$STEPS_LIST_REPORT_OUTPUTS_RESULT")
+        fi
         # Use a random delimiter to capture the multi-line output
         delimiter=$(openssl rand -hex 8)
         echo "result<<$delimiter" >> $GITHUB_OUTPUT
-        echo "### npm audit
-
-        ${STEPS_AUDIT_REPORT_OUTPUTS_RESULT}
-
-        <details>
-        <summary>npm list</summary>
-
-        ${STEPS_LIST_REPORT_OUTPUTS_RESULT}
-
-        </details>
-        " >> $GITHUB_OUTPUT
+        echo "$RESULT" >> $GITHUB_OUTPUT
         echo "$delimiter" >> $GITHUB_OUTPUT
