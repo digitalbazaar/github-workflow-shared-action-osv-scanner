@@ -1,6 +1,6 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
-## Unreleased
+## 4.0.2 - 2026-08-21
 
 ### Fixed
 - Fix `osv-scanner-main.yaml` failing on every `push`/`schedule` run with
