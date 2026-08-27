@@ -37,14 +37,13 @@ of your choice.
 name: Use OSV to do SCA on main (daily) and PRs
 
 on:
+  # branches excluded to allow any `base_ref` for comparison against
   pull_request:
-    branches: [main]
   merge_group:
-    branches: [main]
+  push:
+  # daily at 00:00
   schedule:
     - cron: 0 0 * * *
-  push:
-    branches: [main]
 
 jobs:
   ## run the following on PRs
