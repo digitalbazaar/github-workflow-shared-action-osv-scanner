@@ -87,7 +87,7 @@ See the [CHANGELOG](CHANGELOG.md) for release details.
 
 ## License
 
-[BSD-3-Clause](LICENSE) Copyright 2025 Digital Bazaar, Inc.
+[BSD-3-Clause](LICENSE) Copyright 2025-2026 Digital Bazaar, Inc.
 
 Commercial support is available by contacting
 [Digital Bazaar](https://digitalbazaar.com/) <support@digitalbazaar.com>.
