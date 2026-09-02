@@ -1,5 +1,13 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
+## Unreleased
+
+### Fixed
+- Fix `osv-scanner-pr.yaml`'s PR comment missing a blank line before the
+  `---` separator between the base and PR branch sections, so it rendered
+  as literal text instead of a horizontal rule when preceded by a
+  `<details>` block.
+
 ## 4.0.4 - 2026-08-21
 
 ### Changed

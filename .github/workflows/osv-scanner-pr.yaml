@@ -70,6 +70,7 @@ jobs:
             echo "$OLD_OSV" >> "$GITHUB_OUTPUT"
             echo "" >> "$GITHUB_OUTPUT"
             echo "$OLD_EXTRA" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
             echo "---" >> "$GITHUB_OUTPUT"
             echo "" >> "$GITHUB_OUTPUT"
             echo "## Vulnerability results from current PR branch" >> "$GITHUB_OUTPUT"
