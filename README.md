@@ -66,13 +66,14 @@ jobs:
 
 | Release | SHA |
 | ------- | --- |
-| v4.0.4  | dad8ba639b7281f1346833f5e6422f5490e578d2 |
+| v4.0.5  | b65a7545b2887e10d287fc8541a2ee9bb5110630 |
 
 <details>
   <summary>Older releases</summary>
 
 | Release | SHA |
 | ------- | --- |
+| v4.0.4  | dad8ba639b7281f1346833f5e6422f5490e578d2 |
 | v4.0.3  | 7a493ff60d51b097b1a0cc489f23a8ec422c7384 |
 | v4.0.2  | e17ef462f806dd97f973a3fd5c67bd761179c983 |
 | v4.0.1  | 8599d9f4d0964fa3ea83a50f6e50d69524adc7ab |
