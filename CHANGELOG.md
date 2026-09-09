@@ -1,6 +1,6 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
-## Unreleased
+## 4.0.5 - 2026-09-09
 
 ### Fixed
 - Fix `osv-scanner-pr.yaml`'s PR comment missing a blank line before the
