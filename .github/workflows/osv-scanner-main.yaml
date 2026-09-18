@@ -7,6 +7,29 @@ name: Use OSV to do SCA on `main`
 
 on:
   workflow_call:
+    inputs:
+      private-repo-orgs:
+        description: >-
+          Optional whitespace-separated list of GitHub organization or user
+          names whose private repositories are used as npm dependencies. git
+          URLs for these orgs are rewritten to token-authenticated HTTPS so
+          the lockfile can be generated. Requires `PRIVATE_REPO_TOKEN`.
+        required: false
+        type: string
+        default: ''
+      npm-registry-url:
+        description: >-
+          Optional npm registry URL (e.g. `https://npm.pkg.github.com`) to
+          authenticate against using `PRIVATE_REPO_TOKEN`.
+        required: false
+        type: string
+        default: ''
+    secrets:
+      PRIVATE_REPO_TOKEN:
+        description: >-
+          Optional token with read access to the private repositories and
+          packages named by the inputs above.
+        required: false
 
 jobs:
   ## run the following only on the main branch
@@ -35,6 +58,9 @@ jobs:
           ref: ${{ github.sha }}
           node-version: ${{ matrix.node-version }}
           warning-label: "the scan"
+          private-repo-orgs: ${{ inputs.private-repo-orgs }}
+          npm-registry-url: ${{ inputs.npm-registry-url }}
+          private-repo-token: ${{ secrets.PRIVATE_REPO_TOKEN }}
 
       # Create the OSV label if it doesn't already exist
       - name: Create OSV label if it doesn't exist

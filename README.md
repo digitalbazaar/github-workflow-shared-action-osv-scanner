@@ -62,6 +62,56 @@ jobs:
       issues: write
 ```
 
+## Private repository dependencies
+
+By default the workflows generate `package-lock.json` with no credentials, which
+is all a project with public dependencies needs. Projects that depend on
+*private* GitHub repositories, or on packages served from a private npm
+registry such as GitHub Packages, can opt in with the inputs below. Repos that
+leave them unset are unaffected.
+
+| Input | Description |
+| ----- | ----------- |
+| `private-repo-orgs` | Whitespace-separated list of GitHub organization or user names whose private repositories are used as npm dependencies. git URLs for these orgs are rewritten to token-authenticated HTTPS so `npm install --package-lock-only` can resolve them. |
+| `npm-registry-url` | npm registry URL (e.g. `https://npm.pkg.github.com`) to authenticate against. |
+
+| Secret | Description |
+| ------ | ----------- |
+| `PRIVATE_REPO_TOKEN` | Token used for both of the above. It needs `contents: read` on the private repositories named by `private-repo-orgs`, and `read:packages` if `npm-registry-url` is set. |
+
+Setting `private-repo-orgs` without also providing `PRIVATE_REPO_TOKEN` fails
+the run with an explanatory error rather than an obscure npm authentication
+failure.
+
+```yaml
+jobs:
+  osv-scan-pr:
+    uses: digitalbazaar/github-workflow-shared-action-osv-scanner/.github/workflows/osv-scanner-pr.yaml@{{SHA}}
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      private-repo-orgs: my-org
+      npm-registry-url: https://npm.pkg.github.com
+    secrets:
+      PRIVATE_REPO_TOKEN: ${{ secrets.MY_CI_TOKEN }}
+
+  osv-scan-main:
+    uses: digitalbazaar/github-workflow-shared-action-osv-scanner/.github/workflows/osv-scanner-main.yaml@{{SHA}}
+    permissions:
+      contents: read
+      issues: write
+    with:
+      private-repo-orgs: my-org
+      npm-registry-url: https://npm.pkg.github.com
+    secrets:
+      PRIVATE_REPO_TOKEN: ${{ secrets.MY_CI_TOKEN }}
+```
+
+The rewrite is written to the runner's global git config for the duration of
+the scan and removed again afterwards, so this is intended for ephemeral
+runners.
+
 ## Releases
 
 | Release | SHA |
