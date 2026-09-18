@@ -29,13 +29,20 @@ inputs:
   npm-registry-url:
     description: >-
       Optional npm registry URL (e.g. `https://npm.pkg.github.com`) to
-      authenticate against using `private-repo-token`.
+      authenticate against using `npm-registry-token`.
     required: false
     default: ''
   private-repo-token:
     description: >-
-      Optional token with read access to the private repositories and packages
-      named by `private-repo-orgs` and `npm-registry-url`.
+      Optional token with read access to the private repositories named by
+      `private-repo-orgs`. Also used as the `npm-registry-token` fallback.
+    required: false
+    default: ''
+  npm-registry-token:
+    description: >-
+      Optional token with read access to the packages served by
+      `npm-registry-url`. Falls back to `private-repo-token` when unset, so a
+      caller using one token for both only needs to set that one.
     required: false
     default: ''
 
@@ -57,16 +64,20 @@ runs:
       env:
         PRIVATE_REPO_ORGS: ${{ inputs.private-repo-orgs }}
         NPM_REGISTRY_URL: ${{ inputs.npm-registry-url }}
-        HAS_TOKEN: ${{ inputs.private-repo-token != '' }}
+        # Presence only; the token values themselves stay out of this step.
+        HAS_REPO_TOKEN: ${{ inputs.private-repo-token != '' }}
+        HAS_NPM_TOKEN: ${{ inputs.npm-registry-token != '' }}
       run: |
-        if [ "$HAS_TOKEN" != "true" ]; then
-          if [ -n "$PRIVATE_REPO_ORGS" ]; then
-            echo "::error::'private-repo-orgs' was set but no private repo token was provided. Pass the 'PRIVATE_REPO_TOKEN' secret to this workflow."
-            exit 1
-          fi
-          if [ -n "$NPM_REGISTRY_URL" ]; then
-            echo "::warning::'npm-registry-url' was set but no private repo token was provided; npm will authenticate to it with an empty token."
-          fi
+        if [ -n "$PRIVATE_REPO_ORGS" ] && [ "$HAS_REPO_TOKEN" != "true" ]; then
+          echo "::error::'private-repo-orgs' was set but no 'PRIVATE_REPO_TOKEN' secret was provided."
+          exit 1
+        fi
+        if [ -n "$NPM_REGISTRY_URL" ] && [ "$HAS_NPM_TOKEN" != "true" ] \
+            && [ "$HAS_REPO_TOKEN" != "true" ]; then
+          echo "::warning::'npm-registry-url' was set but neither the 'NPM_REGISTRY_TOKEN' nor the 'PRIVATE_REPO_TOKEN' secret was provided; npm will authenticate to it with an empty token."
+        fi
+        if [ "$HAS_NPM_TOKEN" = "true" ] && [ -z "$NPM_REGISTRY_URL" ]; then
+          echo "::warning::The 'NPM_REGISTRY_TOKEN' secret was provided but 'npm-registry-url' is unset, so the token will not be used."
         fi
         # Reject anything that isn't a plain org/user name, so the input
         # can't smuggle extra git config keys into the rewrite below.
@@ -124,7 +135,7 @@ runs:
       if: steps.has_package_lock.outputs.files_exists == 'false'
       shell: bash
       env:
-        NODE_AUTH_TOKEN: ${{ inputs.private-repo-token }}
+        NODE_AUTH_TOKEN: ${{ inputs.npm-registry-token || inputs.private-repo-token }}
       run: |
         npm install --package-lock-only --ignore-scripts
     - name: "Run scanner on code and generate Markdown"
@@ -146,7 +157,7 @@ runs:
       id: npm_audit
       shell: bash
       env:
-        NODE_AUTH_TOKEN: ${{ inputs.private-repo-token }}
+        NODE_AUTH_TOKEN: ${{ inputs.npm-registry-token || inputs.private-repo-token }}
       run: |
         # Use a random delimiter to capture the multi-line output
         delimiter=$(openssl rand -hex 8)
@@ -187,7 +198,7 @@ runs:
       shell: bash
       env:
         STEPS_NPM_AUDIT_OUTPUTS_RESULT: ${{ steps.npm_audit.outputs.result }}
-        NODE_AUTH_TOKEN: ${{ inputs.private-repo-token }}
+        NODE_AUTH_TOKEN: ${{ inputs.npm-registry-token || inputs.private-repo-token }}
       run: |
         DEPS=$(echo "$STEPS_NPM_AUDIT_OUTPUTS_RESULT" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
         if [ -z "$DEPS" ]; then

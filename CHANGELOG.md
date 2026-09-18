@@ -5,15 +5,23 @@
 ### Added
 - Optional support for projects whose npm dependencies live in private GitHub
   repositories or a private npm registry. Both reusable workflows now accept
-  `private-repo-orgs` and `npm-registry-url` inputs plus a `PRIVATE_REPO_TOKEN`
-  secret; when `private-repo-orgs` is set, git URLs for those orgs (ssh, scp
-  and https forms) are rewritten to token-authenticated HTTPS so
-  `npm install --package-lock-only` can resolve them, and the token is used as
-  `NODE_AUTH_TOKEN` for `npm install`/`audit`/`list`. The token reaches the
-  shell only via `env:`, and the rewrite is removed from the runner's global
-  git config when the scan finishes. Behavior is unchanged for callers that
-  leave the new inputs unset. Setting `private-repo-orgs` without a token
-  fails with an explanatory `::error::`.
+  `private-repo-orgs` and `npm-registry-url` inputs, plus `PRIVATE_REPO_TOKEN`
+  and `NPM_REGISTRY_TOKEN` secrets. When `private-repo-orgs` is set, git URLs
+  for those orgs (ssh, scp and https forms) are rewritten to
+  token-authenticated HTTPS so `npm install --package-lock-only` can resolve
+  them; `NPM_REGISTRY_TOKEN` is used as `NODE_AUTH_TOKEN` for
+  `npm install`/`audit`/`list`.
+- The two tokens are separate so each can be scoped to only what it needs and
+  rotated independently. `NPM_REGISTRY_TOKEN` falls back to
+  `PRIVATE_REPO_TOKEN` when unset, so a single token carrying both scopes
+  still only requires one secret. The fallback is one-way:
+  `NPM_REGISTRY_TOKEN` is never used for git.
+- Tokens reach the shell only via `env:`, never interpolated into a `run:`
+  body, and the git rewrite is removed from the runner's global git config
+  when the scan finishes. Behavior is unchanged for callers that leave the new
+  inputs unset. Setting `private-repo-orgs` without `PRIVATE_REPO_TOKEN` fails
+  with an explanatory `::error::`, and settings that would silently do nothing
+  produce a `::warning::`.
 
 ## 4.0.5 - 2026-09-09
 

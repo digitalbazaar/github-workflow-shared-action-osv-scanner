@@ -20,15 +20,20 @@ on:
       npm-registry-url:
         description: >-
           Optional npm registry URL (e.g. `https://npm.pkg.github.com`) to
-          authenticate against using `PRIVATE_REPO_TOKEN`.
+          authenticate against using `NPM_REGISTRY_TOKEN`.
         required: false
         type: string
         default: ''
     secrets:
       PRIVATE_REPO_TOKEN:
         description: >-
-          Optional token with read access to the private repositories and
-          packages named by the inputs above.
+          Optional token with read access to the private repositories named by
+          `private-repo-orgs`. Also used as the `NPM_REGISTRY_TOKEN` fallback.
+        required: false
+      NPM_REGISTRY_TOKEN:
+        description: >-
+          Optional token with read access to the packages served by
+          `npm-registry-url`. Defaults to `PRIVATE_REPO_TOKEN` when unset.
         required: false
 
 jobs:
@@ -61,6 +66,7 @@ jobs:
           private-repo-orgs: ${{ inputs.private-repo-orgs }}
           npm-registry-url: ${{ inputs.npm-registry-url }}
           private-repo-token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          npm-registry-token: ${{ secrets.NPM_REGISTRY_TOKEN }}
 
       # Create the OSV label if it doesn't already exist
       - name: Create OSV label if it doesn't exist

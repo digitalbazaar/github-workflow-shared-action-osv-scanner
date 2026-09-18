@@ -77,11 +77,18 @@ leave them unset are unaffected.
 
 | Secret | Description |
 | ------ | ----------- |
-| `PRIVATE_REPO_TOKEN` | Token used for both of the above. It needs `contents: read` on the private repositories named by `private-repo-orgs`, and `read:packages` if `npm-registry-url` is set. |
+| `PRIVATE_REPO_TOKEN` | Token for `private-repo-orgs`. Needs `contents: read` on the private repositories named there. |
+| `NPM_REGISTRY_TOKEN` | Token for `npm-registry-url`. Needs `read:packages`. Defaults to `PRIVATE_REPO_TOKEN` when unset. |
+
+The two are separate so each can be scoped to just what it needs, and so they
+can be rotated independently. A single token carrying both scopes still works:
+pass it as `PRIVATE_REPO_TOKEN` and leave `NPM_REGISTRY_TOKEN` unset. The
+fallback is one-way — `NPM_REGISTRY_TOKEN` is never used for git.
 
 Setting `private-repo-orgs` without also providing `PRIVATE_REPO_TOKEN` fails
 the run with an explanatory error rather than an obscure npm authentication
-failure.
+failure. Settings that would silently do nothing — a registry URL with no
+token, or a registry token with no URL — produce a warning.
 
 ```yaml
 jobs:
@@ -94,7 +101,8 @@ jobs:
       private-repo-orgs: my-org
       npm-registry-url: https://npm.pkg.github.com
     secrets:
-      PRIVATE_REPO_TOKEN: ${{ secrets.MY_CI_TOKEN }}
+      PRIVATE_REPO_TOKEN: ${{ secrets.MY_GIT_PAT }}
+      NPM_REGISTRY_TOKEN: ${{ secrets.MY_NPM_PAT }}
 
   osv-scan-main:
     uses: digitalbazaar/github-workflow-shared-action-osv-scanner/.github/workflows/osv-scanner-main.yaml@{{SHA}}
@@ -105,7 +113,8 @@ jobs:
       private-repo-orgs: my-org
       npm-registry-url: https://npm.pkg.github.com
     secrets:
-      PRIVATE_REPO_TOKEN: ${{ secrets.MY_CI_TOKEN }}
+      PRIVATE_REPO_TOKEN: ${{ secrets.MY_GIT_PAT }}
+      NPM_REGISTRY_TOKEN: ${{ secrets.MY_NPM_PAT }}
 ```
 
 The rewrite is written to the runner's global git config for the duration of
