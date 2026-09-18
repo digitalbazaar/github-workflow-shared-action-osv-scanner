@@ -125,13 +125,14 @@ runners.
 
 | Release | SHA |
 | ------- | --- |
-| v4.0.5  | b65a7545b2887e10d287fc8541a2ee9bb5110630 |
+| v4.1.0  | 74742859abaf5594b6fcd2ed2a02709be3165ef9 |
 
 <details>
   <summary>Older releases</summary>
 
 | Release | SHA |
 | ------- | --- |
+| v4.0.5  | b65a7545b2887e10d287fc8541a2ee9bb5110630 |
 | v4.0.4  | dad8ba639b7281f1346833f5e6422f5490e578d2 |
 | v4.0.3  | 7a493ff60d51b097b1a0cc489f23a8ec422c7384 |
 | v4.0.2  | e17ef462f806dd97f973a3fd5c67bd761179c983 |
