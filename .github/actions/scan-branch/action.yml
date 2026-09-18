@@ -18,6 +18,26 @@ inputs:
       Label used in the ::warning:: annotation if npm audit/list report
       generation fails (e.g. "the base branch scan")
     required: true
+  private-repo-orgs:
+    description: >-
+      Optional whitespace-separated list of GitHub organization or user names
+      whose private repositories are used as npm dependencies. git URLs for
+      these orgs are rewritten to token-authenticated HTTPS so the lockfile
+      can be generated. Requires `private-repo-token`.
+    required: false
+    default: ''
+  npm-registry-url:
+    description: >-
+      Optional npm registry URL (e.g. `https://npm.pkg.github.com`) to
+      authenticate against using `private-repo-token`.
+    required: false
+    default: ''
+  private-repo-token:
+    description: >-
+      Optional token with read access to the private repositories and packages
+      named by `private-repo-orgs` and `npm-registry-url`.
+    required: false
+    default: ''
 
 outputs:
   osv-result:
@@ -30,6 +50,35 @@ outputs:
 runs:
   using: composite
   steps:
+    # Catch opt-in private repo settings that can't work, so they fail here
+    # with an explanation rather than as an opaque npm auth error later.
+    - name: Validate private repository inputs
+      shell: bash
+      env:
+        PRIVATE_REPO_ORGS: ${{ inputs.private-repo-orgs }}
+        NPM_REGISTRY_URL: ${{ inputs.npm-registry-url }}
+        HAS_TOKEN: ${{ inputs.private-repo-token != '' }}
+      run: |
+        if [ "$HAS_TOKEN" != "true" ]; then
+          if [ -n "$PRIVATE_REPO_ORGS" ]; then
+            echo "::error::'private-repo-orgs' was set but no private repo token was provided. Pass the 'PRIVATE_REPO_TOKEN' secret to this workflow."
+            exit 1
+          fi
+          if [ -n "$NPM_REGISTRY_URL" ]; then
+            echo "::warning::'npm-registry-url' was set but no private repo token was provided; npm will authenticate to it with an empty token."
+          fi
+        fi
+        # Reject anything that isn't a plain org/user name, so the input
+        # can't smuggle extra git config keys into the rewrite below.
+        set -f
+        for org in $PRIVATE_REPO_ORGS; do
+          case "$org" in
+            *[!A-Za-z0-9._-]*|"")
+              echo "::error::'private-repo-orgs' entry '$org' is not a valid GitHub organization or user name."
+              exit 1
+              ;;
+          esac
+        done
     - name: Checkout ref to scan
       shell: bash
       env:
@@ -45,14 +94,37 @@ runs:
       uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version: ${{ inputs.node-version }}
+        # Only configures npm authentication when non-empty, so an unset
+        # `npm-registry-url` leaves `.npmrc` alone.
+        registry-url: ${{ inputs.npm-registry-url }}
     - name: Does package-lock.json exist?
       id: has_package_lock
       uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
       with:
         files: "package-lock.json"
+    # Let npm resolve private GitHub repo dependencies, when the caller opted
+    # in by supplying both a token and one or more orgs. Covers the ssh, scp
+    # and https URL forms npm can produce for a GitHub dependency.
+    - name: Configure git for private GitHub repositories
+      if: inputs.private-repo-orgs != '' && inputs.private-repo-token != ''
+      shell: bash
+      env:
+        PRIVATE_REPO_ORGS: ${{ inputs.private-repo-orgs }}
+        PRIVATE_REPO_TOKEN: ${{ inputs.private-repo-token }}
+      run: |
+        set -f
+        for org in $PRIVATE_REPO_ORGS; do
+          auth="https://${PRIVATE_REPO_TOKEN}@github.com/${org}/"
+          # `url.<base>.insteadOf` is multi-valued, hence `--add` per form.
+          git config --global --add url."$auth".insteadOf "ssh://git@github.com/${org}/"
+          git config --global --add url."$auth".insteadOf "git@github.com:${org}/"
+          git config --global --add url."$auth".insteadOf "https://github.com/${org}/"
+        done
     - name: Generate `package-lock.json`
       if: steps.has_package_lock.outputs.files_exists == 'false'
       shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.private-repo-token }}
       run: |
         npm install --package-lock-only --ignore-scripts
     - name: "Run scanner on code and generate Markdown"
@@ -73,6 +145,8 @@ runs:
     - name: npm audit
       id: npm_audit
       shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.private-repo-token }}
       run: |
         # Use a random delimiter to capture the multi-line output
         delimiter=$(openssl rand -hex 8)
@@ -113,6 +187,7 @@ runs:
       shell: bash
       env:
         STEPS_NPM_AUDIT_OUTPUTS_RESULT: ${{ steps.npm_audit.outputs.result }}
+        NODE_AUTH_TOKEN: ${{ inputs.private-repo-token }}
       run: |
         DEPS=$(echo "$STEPS_NPM_AUDIT_OUTPUTS_RESULT" | jq -r '[.vulnerabilities | to_entries[] | .key] | join(" ")')
         if [ -z "$DEPS" ]; then
@@ -167,3 +242,21 @@ runs:
         echo "result<<$delimiter" >> $GITHUB_OUTPUT
         echo "$RESULT" >> $GITHUB_OUTPUT
         echo "$delimiter" >> $GITHUB_OUTPUT
+    # Don't leave the token sitting in the runner's global git config for the
+    # rest of the job; `osv-scanner-pr.yaml` runs this action twice, and the
+    # caller may run further steps afterwards.
+    - name: Remove private repository git credentials
+      if: always() && inputs.private-repo-orgs != '' && inputs.private-repo-token != ''
+      shell: bash
+      env:
+        PRIVATE_REPO_ORGS: ${{ inputs.private-repo-orgs }}
+        PRIVATE_REPO_TOKEN: ${{ inputs.private-repo-token }}
+      run: |
+        set -f
+        for org in $PRIVATE_REPO_ORGS; do
+          # Removing the section drops all of the `insteadOf` values at once.
+          # It's not an error if it isn't there: this step also runs when the
+          # action failed before the config was written.
+          git config --global --remove-section \
+            url."https://${PRIVATE_REPO_TOKEN}@github.com/${org}/" 2>/dev/null || true
+        done

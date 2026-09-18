@@ -1,5 +1,20 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
+## Unreleased
+
+### Added
+- Optional support for projects whose npm dependencies live in private GitHub
+  repositories or a private npm registry. Both reusable workflows now accept
+  `private-repo-orgs` and `npm-registry-url` inputs plus a `PRIVATE_REPO_TOKEN`
+  secret; when `private-repo-orgs` is set, git URLs for those orgs (ssh, scp
+  and https forms) are rewritten to token-authenticated HTTPS so
+  `npm install --package-lock-only` can resolve them, and the token is used as
+  `NODE_AUTH_TOKEN` for `npm install`/`audit`/`list`. The token reaches the
+  shell only via `env:`, and the rewrite is removed from the runner's global
+  git config when the scan finishes. Behavior is unchanged for callers that
+  leave the new inputs unset. Setting `private-repo-orgs` without a token
+  fails with an explanatory `::error::`.
+
 ## 4.0.5 - 2026-09-09
 
 ### Fixed
