@@ -1,6 +1,6 @@
 # github-workflow-shared-action-osv-scanner Changelog
 
-## Unreleased
+## 4.1.0 - 2026-09-18
 
 ### Added
 - Optional support for projects whose npm dependencies live in private GitHub
